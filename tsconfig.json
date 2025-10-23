@@ -4,5 +4,7 @@
     "allowSyntheticDefaultImports": true,
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "rootDir": "src",
+    "outDir": "dist",
   },
 }
