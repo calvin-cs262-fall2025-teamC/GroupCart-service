@@ -14,7 +14,7 @@ The GroupCart service handles database management and shopping list algorithms. 
 ## Example
 
 ```ts
-const serviceRoot = "https://groupcart-ggadhpaze4axhxhf.mexicocentral-01.azurewebsites.net";
+const serviceRoot = "https://groupcart-ggadhpaze4axhxhf.mexicocentral-01.azurewebsites.net/api";
 
 // Get data about the group with ID "example-group".
 const res = await fetch(`${serviceRoot}/group/example-group`);
