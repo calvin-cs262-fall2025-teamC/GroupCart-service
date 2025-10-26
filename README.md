@@ -23,4 +23,4 @@ const groupData = await res.json();
 
 ## Docs
 
-The [docs can be accessed here](https://groupcart-ggadhpaze4axhxhf.mexicocentral-01.azurewebsites.net).
+The [docs can be accessed here](https://groupcart-ggadhpaze4axhxhf.mexicocentral-01.azurewebsites.net/docs).
