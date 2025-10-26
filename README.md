@@ -3,7 +3,7 @@
 The GroupCart backend service is deployed at https://groupcart-ggadhpaze4axhxhf.mexicocentral-01.azurewebsites.net/.
 
 Service setup checklist:
-- [ ] API endpoints functional (first with example data)
+- [x] API endpoints functional (first with example data)
 - [ ] Schema created
 - [ ] Service fully functional
 
