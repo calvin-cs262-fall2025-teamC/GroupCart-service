@@ -1,0 +1,125 @@
+POST /user/:username
+Create a new user with the given username. Fails if the user already exists.
+
+{
+    firstName: string; // First name of the user.
+    lastName: string;  // Last name of the user.
+}
+
+GET /user/:username
+Get information about a user with the given username.
+
+{
+    firstName: string;      // First name of the user.
+    lastName:  string;      // Last name of the user.
+    groupId: string | null; // ID of the group the user is in, if any.
+}
+
+POST /group/:id
+Create a new group with the given ID. Include a name for the group
+and users to be in the group (should include user who created the group).
+
+{
+    name: string;           // Display name for the group.
+    users: string[] | null; // Optional users in the group.
+}
+
+GET /group/:id
+Get information about a group with the given ID.
+
+{
+    name: string;                    // Display name for the group.
+    users: string[];                 // Usernames of users in the group.
+    userColors: Map<string, string>; // User display colors.
+}
+
+GET /list/:username
+Get the items in a user's personal grocery list.
+
+{
+    id: number;            // Globally unique identifier for this list item.
+    item: string;          // The name of the item.
+    priority: number;      // The priority level of this item (1-3).
+    added: datetime;       // The time this item was added to the grocery list.
+    fulfilled: boolean;    // Whether another user has bought this item for the user.
+    fulfilledBy: string;   // If fulfilled, the username who fulfilled the item.
+    fulfilledAt: datetime; // If fulfilled, the time the item was fulfilled.
+    favorId: number;       // If fulfilled, the ID of the favor.
+}[]
+
+DELETE /list/:username/:id
+Delete the specified item from the user's personal grocery list.
+This should be called when an item is bought or a favor is fulfilled.
+
+POST /list/:username
+Add an item to a user's personal grocery list.
+
+{
+    item: string;     // The name of the item.
+    priority: number; // The priority level of this item (1-3).
+}
+
+PATCH /list/:username/:id
+Modify an item in a user's personal grocery list.
+
+{
+    item: string;     // The name of the item.
+    priority: number; // The priority level of this item (1-3).
+}
+
+GET /favors/for/:username
+Get the favors fulfilled for a particular user.
+
+{
+    id: number;             // The unique identifier of the favor.
+    itemId: number;         // The ID of the item.
+    item: string;           // The name of the item.
+    fulfilledAt: datetime;  // The time the favor was fulfilled.
+    by: string;             // The user the favor was fulfilled by.
+    reimbursed: boolean;    // Whether the doer of the favor has been reimbursed.
+    reimbursedAt: datetime; // When the doer of the favor was reimbursed. (if reimbursed)
+    amount: number;         // How much the doer of the favor is owed.
+}[]
+
+GET /favors/by/:username
+Get the favors fulfilled by a user for other users.
+
+{
+    id: number;             // The unique identifier of the favor.
+    itemId: number;         // The ID of the item.
+    item: string;           // The name of the item.
+    fulfilledAt: datetime;  // The time the favor was fulfilled.
+    for: string;            // The user the favor was fulfilled for.
+    reimbursed: boolean;    // Whether the doer of the favor has been reimbursed.
+    reimbursedAt: datetime; // When the doer of the favor was reimbursed. (if reimbursed)
+    amount: number;         // How much the doer of the favor is owed.
+}[]
+
+POST /favor
+Mark a favor as fulfilled by the given user.
+
+{
+    itemId: number; // The ID of the item.
+    item: string;   // The name of the item.
+    by: string;     // The user the favor is done by.
+    for: string;    // The user the favor is for.
+    amount: number; // How much the doer of the favor is owed.
+}
+
+PATCH /favor/:id
+Change a favor's reimbursement status or amount.
+
+{
+    reimbursed: boolean; // Whether the doer of the favor has been reimbursed.
+    amount: number;      // How much the doer of the favor is owed.
+}
+
+GET /shop
+Get a shopping list for the user's shopping trip that covers
+the needs of one or more users.
+
+{
+    itemIds: number[];  // The items in personal lists, covered by this item in the shopping list. 
+    item: string;       // The name of the item.
+    neededBy: string[]; // The users who need the item.
+}
