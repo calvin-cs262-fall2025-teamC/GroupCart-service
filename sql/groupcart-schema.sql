@@ -1,9 +1,9 @@
 -- GroupCart schema.
 
-DROP TABLE IF EXISTS UserGroup;
-DROP TABLE IF EXISTS AppUser;
-DROP TABLE IF EXISTS ListItem;
 DROP TABLE IF EXISTS Favor;
+DROP TABLE IF EXISTS ListItem;
+DROP TABLE IF EXISTS AppUser;
+DROP TABLE IF EXISTS UserGroup;
 
 CREATE TABLE UserGroup (
     ID INTEGER PRIMARY KEY,
@@ -38,15 +38,15 @@ CREATE TABLE Favor (
 
 -- Test data.
 
-INSERT INTO UserGroup VALUES (0, "GroupCart Dev Team");
+INSERT INTO UserGroup VALUES (0, 'GroupCart Dev Team');
 
 INSERT INTO AppUser (ID, username, firstName, lastName, groupID)
 VALUES
-    (0, "abyle", "Adam", "Byle", 0),
-    (1, "nroberts", "Nick", "Roberts", 0),
-    (2, "aabdullahi", "Aisha", "Abdullahi", 0),
-    (3, "fnsengiyumva", "Faith", "Nsengiyumva", 0),
-    (4, "gcosta", "Guli", "Costa", 0);
+    (0, 'abyle', 'Adam', 'Byle', 0),
+    (1, 'nroberts', 'Nick', 'Roberts', 0),
+    (2, 'aabdullahi', 'Aisha', 'Abdullahi', 0),
+    (3, 'fnsengiyumva', 'Faith', 'Nsengiyumva', 0),
+    (4, 'gcosta', 'Guli', 'Costa', 0);
 
 INSERT INTO ListItem (ID, itemName, priority, userID) VALUES
     (0, 'Milk', 2, 0),
