@@ -1,4 +1,5 @@
 import express from "express";
+import pgPromise from "pg-promise";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import path from "path";
@@ -6,6 +7,16 @@ import path from "path";
 const app = express();
 const port = process.env.PORT || 3000;
 import groupCartRouter from "./routes";
+
+/* DATABASE SETUP */
+
+const db = pgPromise()({
+    host: process.env.DB_SERVER,
+    port: parseInt(process.env.DB_PORT as string) || 5432,
+    database: process.env.DB_DATABASE,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+});
 
 /* SWAGGER SETUP */
 
