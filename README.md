@@ -9,7 +9,7 @@ Service setup checklist:
 
 ## Schema
 
-The database schema can be [observed here](sql/groupchart-schema.sql).
+The database schema can be [observed here](sql/groupcart-schema.sql).
 
 ## Usage
 
