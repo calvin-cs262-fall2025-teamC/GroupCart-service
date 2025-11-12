@@ -3,10 +3,10 @@ import pgPromise from "pg-promise";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import path from "path";
+import { createRouter } from "./routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
-import groupCartRouter from "./routes";
 
 /* DATABASE SETUP */
 
@@ -35,6 +35,7 @@ const options = {
 const specs = swaggerJsdoc(options);
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(specs));
 
+const groupCartRouter = createRouter(db);
 app.use('/api', groupCartRouter);
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
