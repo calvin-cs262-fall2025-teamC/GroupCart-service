@@ -17,7 +17,7 @@ CREATE TABLE AppUser (
     firstName VARCHAR(64) NOT NULL,
     lastName VARCHAR(64) NOT NULL,
     color CHAR(6) NULL,
-    groupID INTEGER NULL REFERENCES UserGroup(ID),
+    groupID INTEGER NULL REFERENCES UserGroup(ID)
 );
 
 CREATE TABLE ListItem (

@@ -5,7 +5,7 @@ The GroupCart backend service is deployed at https://groupcart-ggadhpaze4axhxhf.
 Service setup checklist:
 - [x] API endpoints functional (first with example data)
 - [x] Schema created
-- [ ] Service fully functional
+- [x] Service fully functional
 
 ## Schema
 
