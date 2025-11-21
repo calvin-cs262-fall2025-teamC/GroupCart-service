@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS AppUser;
 DROP TABLE IF EXISTS UserGroup;
 
 CREATE TABLE UserGroup (
-    ID STRING PRIMARY KEY,
+    ID VARCHAR(64) PRIMARY KEY,
     name VARCHAR(64) NOT NULL
 );
 
@@ -17,7 +17,7 @@ CREATE TABLE AppUser (
     firstName VARCHAR(64) NOT NULL,
     lastName VARCHAR(64) NOT NULL,
     color CHAR(6) NULL,
-    groupID INTEGER NULL REFERENCES UserGroup(ID)
+    groupID VARCHAR(64) NULL REFERENCES UserGroup(ID)
 );
 
 CREATE TABLE ListItem (
@@ -43,11 +43,11 @@ INSERT INTO UserGroup VALUES ('dev-team', 'GroupCart Dev Team');
 
 INSERT INTO AppUser (ID, username, firstName, lastName, groupID)
 VALUES
-    (0, 'abyle', 'Adam', 'Byle', 0),
-    (1, 'nroberts', 'Nick', 'Roberts', 0),
-    (2, 'aabdullahi', 'Aisha', 'Abdullahi', 0),
-    (3, 'fnsengiyumva', 'Faith', 'Nsengiyumva', 0),
-    (4, 'gcosta', 'Guli', 'Costa', 0);
+    (0, 'abyle', 'Adam', 'Byle', 'dev-team'),
+    (1, 'nroberts', 'Nick', 'Roberts', 'dev-team'),
+    (2, 'aabdullahi', 'Aisha', 'Abdullahi', 'dev-team'),
+    (3, 'fnsengiyumva', 'Faith', 'Nsengiyumva', 'dev-team'),
+    (4, 'gcosta', 'Guli', 'Costa', 'dev-team');
 
 INSERT INTO ListItem (ID, itemName, priority, userID) VALUES
     (0, 'Milk', 2, 0),
