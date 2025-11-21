@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS AppUser;
 DROP TABLE IF EXISTS UserGroup;
 
 CREATE TABLE UserGroup (
-    ID INTEGER PRIMARY KEY,
+    ID STRING PRIMARY KEY,
     name VARCHAR(64) NOT NULL
 );
 
@@ -39,7 +39,7 @@ CREATE TABLE Favor (
 
 -- Test data.
 
-INSERT INTO UserGroup VALUES (0, 'GroupCart Dev Team');
+INSERT INTO UserGroup VALUES ('dev-team', 'GroupCart Dev Team');
 
 INSERT INTO AppUser (ID, username, firstName, lastName, groupID)
 VALUES

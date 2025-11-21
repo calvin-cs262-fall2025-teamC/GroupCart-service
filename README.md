@@ -21,7 +21,7 @@ The GroupCart service handles database management and shopping list algorithms. 
 const serviceRoot = "https://groupcart-ggadhpaze4axhxhf.mexicocentral-01.azurewebsites.net/api";
 
 // Get data about the group with ID 0.
-const res = await fetch(`${serviceRoot}/group/0`);
+const res = await fetch(`${serviceRoot}/group/dev-team`);
 const groupData = await res.json();
 ```
 
