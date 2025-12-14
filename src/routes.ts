@@ -3,8 +3,6 @@ import { IDatabase } from 'pg-promise';
 
 const router = Router();
 
-// Assume db is passed in or imported from your connection file
-// For this example, we'll accept it as a parameter in a factory function
 export const createRouter = (db: IDatabase<any>) => {
 
     /**
@@ -66,9 +64,14 @@ export const createRouter = (db: IDatabase<any>) => {
         const { firstName, lastName } = req.body;
 
         try {
+            // Validate input
+            if (!firstName || !lastName) {
+                return res.status(400).json({ error: 'firstName and lastName are required' });
+            }
+
             // Check if user already exists
             const existing = await db.oneOrNone(
-                'SELECT ID FROM AppUser WHERE username = $1',
+                'SELECT id FROM AppUser WHERE username = $1',
                 [username]
             );
 
@@ -78,7 +81,7 @@ export const createRouter = (db: IDatabase<any>) => {
 
             // Insert new user
             const result = await db.one(
-                'INSERT INTO AppUser (username, firstName, lastName) VALUES ($1, $2, $3) RETURNING ID',
+                'INSERT INTO AppUser (username, firstName, lastName) VALUES ($1, $2, $3) RETURNING id',
                 [username, firstName, lastName]
             );
 
@@ -219,6 +222,11 @@ export const createRouter = (db: IDatabase<any>) => {
         const { name, users } = req.body;
 
         try {
+            // Validate input
+            if (!name) {
+                return res.status(400).json({ error: 'name is required' });
+            }
+
             // Check if group already exists
             const existing = await db.oneOrNone(
                 'SELECT ID FROM UserGroup WHERE ID = $1',
@@ -237,6 +245,16 @@ export const createRouter = (db: IDatabase<any>) => {
 
             // Update users to be in this group if provided
             if (users && users.length > 0) {
+                // Verify all users exist
+                const existingUsers = await db.any(
+                    'SELECT username FROM AppUser WHERE username = ANY($1)',
+                    [users]
+                );
+
+                if (existingUsers.length !== users.length) {
+                    return res.status(404).json({ error: 'One or more users not found' });
+                }
+
                 await db.none(
                     'UPDATE AppUser SET groupID = $1 WHERE username = ANY($2)',
                     [id, users]
@@ -404,7 +422,7 @@ export const createRouter = (db: IDatabase<any>) => {
         try {
             // Get user ID
             const user = await db.oneOrNone(
-                'SELECT ID FROM AppUser WHERE username = $1',
+                'SELECT id FROM AppUser WHERE username = $1',
                 [username]
             );
 
@@ -414,21 +432,21 @@ export const createRouter = (db: IDatabase<any>) => {
 
             // Get list items with favor information
             const items = await db.any(`
-        SELECT 
-          li.ID as id,
-          li.itemName as item,
-          li.priority,
-          li.added,
-          CASE WHEN f.ID IS NOT NULL THEN true ELSE false END as fulfilled,
-          u.username as fulfilledBy,
-          f.reimbursed as fulfilledAt,
-          f.ID as favorId
-        FROM ListItem li
-        LEFT JOIN Favor f ON li.ID = f.itemID
-        LEFT JOIN AppUser u ON f.byUserID = u.ID
-        WHERE li.userID = $1
-        ORDER BY li.priority, li.added
-      `, [user.id]);
+                SELECT 
+                    li.id,
+                    li.itemName as item,
+                    li.priority,
+                    li.added,
+                    CASE WHEN f.id IS NOT NULL THEN true ELSE false END as fulfilled,
+                    u.username as fulfilledBy,
+                    f.fulfilled as fulfilledAt,
+                    f.id as favorId
+                FROM ListItem li
+                LEFT JOIN Favor f ON li.id = f.itemID
+                LEFT JOIN AppUser u ON f.byUserID = u.id
+                WHERE li.userID = $1
+                ORDER BY li.priority, li.added
+            `, [user.id]);
 
             const formattedItems = items.map(item => ({
                 id: item.id,
@@ -513,9 +531,18 @@ export const createRouter = (db: IDatabase<any>) => {
         const { item, priority } = req.body;
 
         try {
+            // Validate input
+            if (!item) {
+                return res.status(400).json({ error: 'item is required' });
+            }
+
+            if (!priority || priority < 1 || priority > 3) {
+                return res.status(400).json({ error: 'priority must be between 1 and 3' });
+            }
+
             // Get user ID
             const user = await db.oneOrNone(
-                'SELECT ID FROM AppUser WHERE username = $1',
+                'SELECT id FROM AppUser WHERE username = $1',
                 [username]
             );
 
@@ -525,7 +552,7 @@ export const createRouter = (db: IDatabase<any>) => {
 
             // Insert item
             const result = await db.one(
-                'INSERT INTO ListItem (itemName, priority, userID) VALUES ($1, $2, $3) RETURNING ID, added',
+                'INSERT INTO ListItem (itemName, priority, userID) VALUES ($1, $2, $3) RETURNING id, added',
                 [item, priority, user.id]
             );
 
@@ -609,13 +636,22 @@ export const createRouter = (db: IDatabase<any>) => {
         const { item, priority } = req.body;
 
         try {
+            // Validate input
+            if (!item) {
+                return res.status(400).json({ error: 'item is required' });
+            }
+
+            if (!priority || priority < 1 || priority > 3) {
+                return res.status(400).json({ error: 'priority must be between 1 and 3' });
+            }
+
             // Verify user owns this item
             const existing = await db.oneOrNone(`
-        SELECT li.ID 
-        FROM ListItem li
-        JOIN AppUser u ON li.userID = u.ID
-        WHERE li.ID = $1 AND u.username = $2
-      `, [id, username]);
+                SELECT li.id 
+                FROM ListItem li
+                JOIN AppUser u ON li.userID = u.id
+                WHERE li.id = $1 AND u.username = $2
+            `, [id, username]);
 
             if (!existing) {
                 return res.status(404).json({ error: 'User or item not found' });
@@ -623,7 +659,7 @@ export const createRouter = (db: IDatabase<any>) => {
 
             // Update item
             await db.none(
-                'UPDATE ListItem SET itemName = $1, priority = $2 WHERE ID = $3',
+                'UPDATE ListItem SET itemName = $1, priority = $2 WHERE id = $3',
                 [item, priority, id]
             );
 
@@ -644,7 +680,7 @@ export const createRouter = (db: IDatabase<any>) => {
      * /list/{username}/{id}:
      *   delete:
      *     summary: Delete grocery list item
-     *     description: Delete the specified item from the user's personal grocery list. This should be called when an item is bought or a favor is fulfilled.
+     *     description: Delete the specified item from the user's personal grocery list.
      *     parameters:
      *       - in: path
      *         name: username
@@ -681,11 +717,11 @@ export const createRouter = (db: IDatabase<any>) => {
         try {
             // Verify user owns this item
             const existing = await db.oneOrNone(`
-        SELECT li.ID 
-        FROM ListItem li
-        JOIN AppUser u ON li.userID = u.ID
-        WHERE li.ID = $1 AND u.username = $2
-      `, [id, username]);
+                SELECT li.id 
+                FROM ListItem li
+                JOIN AppUser u ON li.userID = u.id
+                WHERE li.id = $1 AND u.username = $2
+            `, [id, username]);
 
             if (!existing) {
                 return res.status(404).json({ error: 'User or item not found' });
@@ -695,7 +731,7 @@ export const createRouter = (db: IDatabase<any>) => {
             await db.none('DELETE FROM Favor WHERE itemID = $1', [id]);
 
             // Delete item
-            await db.none('DELETE FROM ListItem WHERE ID = $1', [id]);
+            await db.none('DELETE FROM ListItem WHERE id = $1', [id]);
 
             res.status(200).json({
                 message: 'Item deleted successfully',
@@ -773,7 +809,7 @@ export const createRouter = (db: IDatabase<any>) => {
 
         try {
             const user = await db.oneOrNone(
-                'SELECT ID FROM AppUser WHERE username = $1',
+                'SELECT id FROM AppUser WHERE username = $1',
                 [username]
             );
 
@@ -782,21 +818,21 @@ export const createRouter = (db: IDatabase<any>) => {
             }
 
             const favors = await db.any(`
-        SELECT 
-          f.ID as id,
-          f.itemID,
-          li.itemName as item,
-          li.added as fulfilledAt,
-          u.username as by,
-          CASE WHEN f.reimbursed IS NOT NULL THEN true ELSE false END as reimbursed,
-          f.reimbursed as reimbursedAt,
-          f.amount
-        FROM Favor f
-        JOIN ListItem li ON f.itemID = li.ID
-        JOIN AppUser u ON f.byUserID = u.ID
-        WHERE f.forUserID = $1
-        ORDER BY li.added DESC
-      `, [user.id]);
+                SELECT 
+                    f.id,
+                    f.itemID,
+                    li.itemName as item,
+                    f.fulfilled as fulfilledAt,
+                    u.username as by,
+                    CASE WHEN f.reimbursed IS NOT NULL THEN true ELSE false END as reimbursed,
+                    f.reimbursed as reimbursedAt,
+                    f.amount
+                FROM Favor f
+                JOIN ListItem li ON f.itemID = li.id
+                JOIN AppUser u ON f.byUserID = u.id
+                WHERE f.forUserID = $1
+                ORDER BY f.fulfilled DESC
+            `, [user.id]);
 
             const formattedFavors = favors.map(favor => ({
                 id: favor.id,
@@ -882,7 +918,7 @@ export const createRouter = (db: IDatabase<any>) => {
 
         try {
             const user = await db.oneOrNone(
-                'SELECT ID FROM AppUser WHERE username = $1',
+                'SELECT id FROM AppUser WHERE username = $1',
                 [username]
             );
 
@@ -891,21 +927,21 @@ export const createRouter = (db: IDatabase<any>) => {
             }
 
             const favors = await db.any(`
-        SELECT 
-          f.ID as id,
-          f.itemID,
-          li.itemName as item,
-          li.added as fulfilledAt,
-          u.username as "for",
-          CASE WHEN f.reimbursed IS NOT NULL THEN true ELSE false END as reimbursed,
-          f.reimbursed as reimbursedAt,
-          f.amount
-        FROM Favor f
-        JOIN ListItem li ON f.itemID = li.ID
-        JOIN AppUser u ON f.forUserID = u.ID
-        WHERE f.byUserID = $1
-        ORDER BY li.added DESC
-      `, [user.id]);
+                SELECT 
+                    f.id,
+                    f.itemID,
+                    li.itemName as item,
+                    f.fulfilled as fulfilledAt,
+                    u.username as "for",
+                    CASE WHEN f.reimbursed IS NOT NULL THEN true ELSE false END as reimbursed,
+                    f.reimbursed as reimbursedAt,
+                    f.amount
+                FROM Favor f
+                JOIN ListItem li ON f.itemID = li.id
+                JOIN AppUser u ON f.forUserID = u.id
+                WHERE f.byUserID = $1
+                ORDER BY f.fulfilled DESC
+            `, [user.id]);
 
             const formattedFavors = favors.map(favor => ({
                 id: favor.id,
@@ -1007,13 +1043,18 @@ export const createRouter = (db: IDatabase<any>) => {
         const { itemId, item, by, for: forUser, amount } = req.body;
 
         try {
+            // Validate input
+            if (!itemId || !by || !forUser || amount === undefined) {
+                return res.status(400).json({ error: 'itemId, by, for, and amount are required' });
+            }
+
             // Get user IDs
             const byUserData = await db.oneOrNone(
-                'SELECT ID FROM AppUser WHERE username = $1',
+                'SELECT id FROM AppUser WHERE username = $1',
                 [by]
             );
             const forUserData = await db.oneOrNone(
-                'SELECT ID FROM AppUser WHERE username = $1',
+                'SELECT id FROM AppUser WHERE username = $1',
                 [forUser]
             );
 
@@ -1021,19 +1062,29 @@ export const createRouter = (db: IDatabase<any>) => {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            // Verify item exists
-            const itemExists = await db.oneOrNone(
-                'SELECT ID FROM ListItem WHERE ID = $1',
+            // Verify item exists and belongs to forUser
+            const itemData = await db.oneOrNone(
+                'SELECT id, itemName FROM ListItem WHERE id = $1 AND userID = $2',
+                [itemId, forUserData.id]
+            );
+
+            if (!itemData) {
+                return res.status(404).json({ error: 'Item not found or does not belong to the specified user' });
+            }
+
+            // Check if favor already exists for this item
+            const existingFavor = await db.oneOrNone(
+                'SELECT id FROM Favor WHERE itemID = $1',
                 [itemId]
             );
 
-            if (!itemExists) {
-                return res.status(404).json({ error: 'Item not found' });
+            if (existingFavor) {
+                return res.status(409).json({ error: 'Favor already exists for this item' });
             }
 
             // Insert favor
             const result = await db.one(
-                'INSERT INTO Favor (amount, byUserID, forUserID, itemID) VALUES ($1, $2, $3, $4) RETURNING ID',
+                'INSERT INTO Favor (amount, byUserID, forUserID, itemID) VALUES ($1, $2, $3, $4) RETURNING id, fulfilled',
                 [amount, byUserData.id, forUserData.id, itemId]
             );
 
@@ -1041,11 +1092,11 @@ export const createRouter = (db: IDatabase<any>) => {
                 message: 'Favor marked as fulfilled',
                 id: result.id,
                 itemId,
-                item,
+                item: item || itemData.itemname,
                 by,
                 for: forUser,
                 amount,
-                fulfilledAt: new Date().toISOString(),
+                fulfilledAt: result.fulfilled,
                 reimbursed: false
             });
         } catch (error) {
@@ -1118,9 +1169,14 @@ export const createRouter = (db: IDatabase<any>) => {
         const { reimbursed, amount } = req.body;
 
         try {
+            // Validate input
+            if (amount === undefined || reimbursed === undefined) {
+                return res.status(400).json({ error: 'reimbursed and amount are required' });
+            }
+
             // Check if favor exists
             const existing = await db.oneOrNone(
-                'SELECT ID FROM Favor WHERE ID = $1',
+                'SELECT id FROM Favor WHERE id = $1',
                 [id]
             );
 
@@ -1129,9 +1185,9 @@ export const createRouter = (db: IDatabase<any>) => {
             }
 
             // Update favor
-            const reimbursedAt = reimbursed ? new Date().toISOString() : null;
+            const reimbursedAt = reimbursed ? new Date() : null;
             await db.none(
-                'UPDATE Favor SET amount = $1, reimbursed = $2 WHERE ID = $3',
+                'UPDATE Favor SET amount = $1, reimbursed = $2 WHERE id = $3',
                 [amount, reimbursedAt, id]
             );
 
@@ -1140,7 +1196,7 @@ export const createRouter = (db: IDatabase<any>) => {
                 id: parseInt(id),
                 reimbursed,
                 amount,
-                reimbursedAt
+                reimbursedAt: reimbursedAt ? reimbursedAt.toISOString() : null
             });
         } catch (error) {
             console.error(error);
@@ -1185,17 +1241,17 @@ export const createRouter = (db: IDatabase<any>) => {
         try {
             // Get all unfulfilled items grouped by item name
             const items = await db.any(`
-        SELECT 
-          li.itemName as item,
-          array_agg(li.ID) as itemIds,
-          array_agg(u.username) as neededBy
-        FROM ListItem li
-        JOIN AppUser u ON li.userID = u.ID
-        LEFT JOIN Favor f ON li.ID = f.itemID
-        WHERE f.ID IS NULL
-        GROUP BY li.itemName
-        ORDER BY li.itemName
-      `);
+                SELECT 
+                    li.itemName as item,
+                    array_agg(li.id) as itemIds,
+                    array_agg(u.username) as neededBy
+                FROM ListItem li
+                JOIN AppUser u ON li.userID = u.id
+                LEFT JOIN Favor f ON li.id = f.itemID
+                WHERE f.id IS NULL
+                GROUP BY li.itemName
+                ORDER BY li.itemName
+            `);
 
             const formattedItems = items.map(item => ({
                 itemIds: item.itemids,
