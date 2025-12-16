@@ -28,8 +28,14 @@ const options = {
       version: "0.1.0",
       description: "GroupCart backend service",
     },
+    servers: [
+      {
+        url: "/api",
+        description: "API base path",
+      },
+    ],
   },
-  apis: [path.join(__dirname, "routes.js")], // Absolute path
+  apis: [path.join(__dirname, "routes.js")],
 };
 
 const specs = swaggerJsdoc(options);
