@@ -38,6 +38,8 @@ const options = {
   apis: [path.join(__dirname, "routes.js")],
 };
 
+app.use(express.json());
+
 const specs = swaggerJsdoc(options);
 app.use("/docs", swaggerUI.serve, swaggerUI.setup(specs));
 
