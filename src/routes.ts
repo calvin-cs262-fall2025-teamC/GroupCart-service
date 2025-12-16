@@ -6,7 +6,7 @@ const router = Router();
 export const createRouter = (db: IDatabase<any>) => {
 
     /**
-     * @swagger
+     * @openapi
      * /user/{username}:
      *   post:
      *     summary: Create a new user
@@ -99,7 +99,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /user/{username}:
      *   get:
      *     summary: Get user information
@@ -160,7 +160,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /group/{id}:
      *   post:
      *     summary: Create a new group
@@ -274,7 +274,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /group/{id}:
      *   get:
      *     summary: Get group information
@@ -352,7 +352,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /list/{username}:
      *   get:
      *     summary: Get user's grocery list
@@ -467,7 +467,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /list/{username}:
      *   post:
      *     summary: Add item to grocery list
@@ -570,7 +570,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /list/{username}/{id}:
      *   put:
      *     summary: Modify grocery list item
@@ -676,7 +676,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /list/{username}/{id}:
      *   delete:
      *     summary: Delete grocery list item
@@ -744,7 +744,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /favors/for/{username}:
      *   get:
      *     summary: Get favors fulfilled for user
@@ -853,7 +853,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /favors/by/{username}:
      *   get:
      *     summary: Get favors fulfilled by user
@@ -962,7 +962,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /favor:
      *   post:
      *     summary: Mark favor as fulfilled
@@ -1106,7 +1106,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /favor/{id}:
      *   put:
      *     summary: Update favor details
@@ -1205,7 +1205,7 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
-     * @swagger
+     * @openapi
      * /shop:
      *   get:
      *     summary: Get shopping list
