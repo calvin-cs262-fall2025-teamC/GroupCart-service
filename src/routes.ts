@@ -206,22 +206,22 @@ export const createRouter = (db: IDatabase<any>) => {
             let paramIndex = 1;
 
             if (firstName !== undefined) {
-                updates.push(`firstName = ${paramIndex++}`);
+                updates.push(`firstName = $${paramIndex++}`);
                 values.push(firstName);
             }
 
             if (lastName !== undefined) {
-                updates.push(`lastName = ${paramIndex++}`);
+                updates.push(`lastName = $${paramIndex++}`);
                 values.push(lastName);
             }
 
             if (color !== undefined) {
-                updates.push(`color = ${paramIndex++}`);
+                updates.push(`color = $${paramIndex++}`);
                 values.push(color);
             }
 
             if (groupId !== undefined) {
-                updates.push(`groupID = ${paramIndex++}`);
+                updates.push(`groupID = $${paramIndex++}`);
                 values.push(groupId);
             }
 
@@ -229,7 +229,7 @@ export const createRouter = (db: IDatabase<any>) => {
 
             // Update user
             await db.none(
-                `UPDATE AppUser SET ${updates.join(', ')} WHERE username = ${paramIndex}`,
+                `UPDATE AppUser SET ${updates.join(', ')} WHERE username = $${paramIndex}`,
                 values
             );
 
