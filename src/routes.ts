@@ -99,6 +99,240 @@ export const createRouter = (db: IDatabase<any>) => {
     });
 
     /**
+     * @swagger
+     * /user/{username}:
+     *   put:
+     *     summary: Modify user information
+     *     description: Update a user's first name, last name, and/or group membership.
+     *     parameters:
+     *       - in: path
+     *         name: username
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Username of the user to modify
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               firstName:
+     *                 type: string
+     *                 description: New first name for the user
+     *                 example: Jonathan
+     *               lastName:
+     *                 type: string
+     *                 description: New last name for the user
+     *                 example: Smith
+     *               groupId:
+     *                 type: string
+     *                 nullable: true
+     *                 description: New group ID for the user (null to remove from group)
+     *                 example: dev-team
+     *     responses:
+     *       200:
+     *         description: User modified successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   example: User modified successfully
+     *                 username:
+     *                   type: string
+     *                   example: johndoe
+     *                 firstName:
+     *                   type: string
+     *                   example: Jonathan
+     *                 lastName:
+     *                   type: string
+     *                   example: Smith
+     *                 groupId:
+     *                   type: string
+     *                   nullable: true
+     *                   example: dev-team
+     *       404:
+     *         description: User or group not found
+     *       400:
+     *         description: At least one field must be provided to update
+     */
+    router.put('/user/:username', async (req: Request, res: Response) => {
+        const { username } = req.params;
+        const { firstName, lastName, groupId } = req.body;
+
+        try {
+            // Validate that at least one field is provided
+            if (firstName === undefined && lastName === undefined && groupId === undefined) {
+                return res.status(400).json({ error: 'At least one field (firstName, lastName, or groupId) must be provided' });
+            }
+
+            // Check if user exists
+            const user = await db.oneOrNone(
+                'SELECT id, firstName, lastName, groupID FROM AppUser WHERE username = $1',
+                [username]
+            );
+
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            // If groupId is provided and not null, verify the group exists
+            if (groupId !== undefined && groupId !== null) {
+                const group = await db.oneOrNone(
+                    'SELECT ID FROM UserGroup WHERE ID = $1',
+                    [groupId]
+                );
+
+                if (!group) {
+                    return res.status(404).json({ error: 'Group not found' });
+                }
+            }
+
+            // Build update query dynamically based on provided fields
+            const updates: string[] = [];
+            const values: any[] = [];
+            let paramIndex = 1;
+
+            if (firstName !== undefined) {
+                updates.push(`firstName = ${paramIndex++}`);
+                values.push(firstName);
+            }
+
+            if (lastName !== undefined) {
+                updates.push(`lastName = ${paramIndex++}`);
+                values.push(lastName);
+            }
+
+            if (groupId !== undefined) {
+                updates.push(`groupID = ${paramIndex++}`);
+                values.push(groupId);
+            }
+
+            values.push(username);
+
+            // Update user
+            await db.none(
+                `UPDATE AppUser SET ${updates.join(', ')} WHERE username = ${paramIndex}`,
+                values
+            );
+
+            res.status(200).json({
+                message: 'User modified successfully',
+                username,
+                firstName: firstName !== undefined ? firstName : user.firstname,
+                lastName: lastName !== undefined ? lastName : user.lastname,
+                groupId: groupId !== undefined ? groupId : user.groupid
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * @swagger
+     * /user/{username}:
+     *   delete:
+     *     summary: Delete user account
+     *     description: Delete a user account and all associated data. This will delete the user's list items and any favors they have given or received. Note that this is a permanent action and cannot be undone.
+     *     parameters:
+     *       - in: path
+     *         name: username
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Username of the user to delete
+     *     responses:
+     *       200:
+     *         description: User deleted successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 message:
+     *                   type: string
+     *                   example: User deleted successfully
+     *                 username:
+     *                   type: string
+     *                   example: johndoe
+     *                 deletedItems:
+     *                   type: integer
+     *                   description: Number of list items deleted
+     *                   example: 5
+     *                 deletedFavors:
+     *                   type: integer
+     *                   description: Number of favors deleted (given or received)
+     *                   example: 3
+     *       404:
+     *         description: User not found
+     */
+    router.delete('/user/:username', async (req: Request, res: Response) => {
+        const { username } = req.params;
+
+        try {
+            // Check if user exists and get their ID
+            const user = await db.oneOrNone(
+                'SELECT id FROM AppUser WHERE username = $1',
+                [username]
+            );
+
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            // Count items and favors for the response
+            const itemCount = await db.one(
+                'SELECT COUNT(*) as count FROM ListItem WHERE userID = $1',
+                [user.id]
+            );
+
+            const favorCount = await db.one(
+                'SELECT COUNT(*) as count FROM Favor WHERE byUserID = $1 OR forUserID = $1',
+                [user.id]
+            );
+
+            // Delete favors associated with user's items (CASCADE won't handle this)
+            await db.none(
+                'DELETE FROM Favor WHERE itemID IN (SELECT id FROM ListItem WHERE userID = $1)',
+                [user.id]
+            );
+
+            // Delete favors where user was the giver or receiver
+            await db.none(
+                'DELETE FROM Favor WHERE byUserID = $1 OR forUserID = $1',
+                [user.id]
+            );
+
+            // Delete user's list items
+            await db.none(
+                'DELETE FROM ListItem WHERE userID = $1',
+                [user.id]
+            );
+
+            // Delete user
+            await db.none(
+                'DELETE FROM AppUser WHERE id = $1',
+                [user.id]
+            );
+
+            res.status(200).json({
+                message: 'User deleted successfully',
+                username,
+                deletedItems: parseInt(itemCount.count),
+                deletedFavors: parseInt(favorCount.count)
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    /**
      * @openapi
      * /user/{username}:
      *   get:
