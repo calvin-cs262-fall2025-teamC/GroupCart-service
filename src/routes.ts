@@ -103,7 +103,7 @@ export const createRouter = (db: IDatabase<any>) => {
      * /user/{username}:
      *   put:
      *     summary: Modify user information
-     *     description: Update a user's first name, last name, and/or group membership.
+     *     description: Update a user's first name, last name, color, and/or group membership.
      *     parameters:
      *       - in: path
      *         name: username
@@ -131,6 +131,11 @@ export const createRouter = (db: IDatabase<any>) => {
      *                 nullable: true
      *                 description: New group ID for the user (null to remove from group)
      *                 example: dev-team
+     *               color:
+     *                 nullable: true
+     *                 type: string
+     *                 description: New color for the user
+     *                 example: #ff0000
      *     responses:
      *       200:
      *         description: User modified successfully
@@ -155,6 +160,9 @@ export const createRouter = (db: IDatabase<any>) => {
      *                   type: string
      *                   nullable: true
      *                   example: dev-team
+     *                 color:
+     *                   type: string
+     *                   example: #ff0000
      *       404:
      *         description: User or group not found
      *       400:
@@ -162,17 +170,17 @@ export const createRouter = (db: IDatabase<any>) => {
      */
     router.put('/user/:username', async (req: Request, res: Response) => {
         const { username } = req.params;
-        const { firstName, lastName, groupId } = req.body;
+        const { firstName, lastName, groupId, color } = req.body;
 
         try {
             // Validate that at least one field is provided
-            if (firstName === undefined && lastName === undefined && groupId === undefined) {
-                return res.status(400).json({ error: 'At least one field (firstName, lastName, or groupId) must be provided' });
+            if (firstName === undefined && lastName === undefined && groupId === undefined && color == undefined) {
+                return res.status(400).json({ error: 'At least one field (firstName, lastName, color, or groupId) must be provided' });
             }
 
             // Check if user exists
             const user = await db.oneOrNone(
-                'SELECT id, firstName, lastName, groupID FROM AppUser WHERE username = $1',
+                'SELECT id, firstName, lastName, color, groupID FROM AppUser WHERE username = $1',
                 [username]
             );
 
@@ -207,6 +215,11 @@ export const createRouter = (db: IDatabase<any>) => {
                 values.push(lastName);
             }
 
+            if (color !== undefined) {
+                updates.push(`color = ${paramIndex++}`);
+                values.push(color);
+            }
+
             if (groupId !== undefined) {
                 updates.push(`groupID = ${paramIndex++}`);
                 values.push(groupId);
@@ -225,7 +238,8 @@ export const createRouter = (db: IDatabase<any>) => {
                 username,
                 firstName: firstName !== undefined ? firstName : user.firstname,
                 lastName: lastName !== undefined ? lastName : user.lastname,
-                groupId: groupId !== undefined ? groupId : user.groupid
+                color: color !== undefined ? color : user.color,
+                groupId: groupId !== undefined ? groupId : user.groupid,
             });
         } catch (error) {
             console.error(error);
